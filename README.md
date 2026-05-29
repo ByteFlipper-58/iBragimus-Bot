@@ -19,6 +19,7 @@ Secrets stay in your `.env` or local SQLite database, runtime data stays on your
 - Conversation context for AI replies (toggle + adjustable depth).
 - Blacklist checks before auto-replying.
 - Message archive for edit/delete recovery, with admin notifications.
+- Bulk-deletion transcript backup file.
 - View-once photo/video saving through the connected account client.
 - SQLite-backed local persistence.
 
@@ -33,24 +34,109 @@ Secrets stay in your `.env` or local SQLite database, runtime data stays on your
 | Configuration | `pydantic-settings`, `.env` |
 | QR rendering | `segno` |
 
+## Architecture
+
+The codebase is split into small focused modules grouped by responsibility, so
+each layer has one reason to change.
+
+- **Configuration** (`config.py`) — typed environment-driven settings.
+- **Persistence** (`database/`) — `DatabaseManager` owns a single shared
+  SQLite connection. `BotRepository` is a thin container that exposes
+  per-aggregate repositories: `repo.connections`, `repo.settings`,
+  `repo.blacklist`, `repo.logs`, `repo.archive`.
+- **AI service** (`services/ai/`) — pluggable provider package. `AIConfig`
+  resolves the active provider, the `providers/` subpackage holds the
+  per-vendor implementations, `registry.py` caches configured clients,
+  `models.py` powers the admin model picker, and `reply.py` is the
+  high-level helper used by Business handlers.
+- **Catcher service** (`services/catcher/`) — media downloader, HTML
+  formatters for edit/delete alerts, and bulk-deletion transcript
+  generation. All filesystem paths are centralised in `paths.py`.
+- **Business helpers** (`services/business/`) — auto-reply skip policy
+  and message-media caching extracted from handlers.
+- **Notifier** (`services/notifier.py`) — single place for sending
+  messages, documents, and cached media to the admin chat.
+- **Connected account** (`telegram_account/`) — Telethon client lifecycle,
+  view-once media interceptor, session helpers.
+- **Middleware** (`middlewares/db_middleware.py`) — injects `BotRepository`
+  into aiogram handler context.
+- **Handlers** (`handlers/`) — admin and Business event handlers, each split
+  into small modules and a shared FSM-input helper.
+- **Keyboards** (`keyboards/`) — inline keyboard factories grouped by
+  admin screen.
+
 ## Project Structure
 
 ```text
 iBragimusBot/
-├── main.py                     # App entry point, bot setup, routers, middleware
-├── config.py                   # Environment-based settings
+├── main.py                          # App entry: bot, dispatcher, routers, middleware
+├── config.py                        # Pydantic settings from .env
 ├── database/
-│   ├── db.py                   # SQLite connection manager
-│   ├── migrations.py           # Schema bootstrap
-│   └── repository.py           # Repository layer
+│   ├── db.py                        # DatabaseManager (shared aiosqlite connection)
+│   ├── migrations.py                # Schema bootstrap and seed settings
+│   ├── repository.py                # BotRepository (thin aggregator)
+│   └── repositories/                # Per-aggregate repositories
+│       ├── connections.py
+│       ├── settings.py
+│       ├── blacklist.py
+│       ├── logs.py
+│       └── messages_archive.py
 ├── handlers/
-│   ├── admin/                  # Private admin panel flows
-│   └── business/               # Telegram Business event handlers
-├── keyboards/                  # Inline keyboard builders
+│   ├── admin/                       # Private admin panel
+│   │   ├── menu.py                  # /start, /menu, stats, AI toggle, help
+│   │   ├── prompt.py                # System prompt editor
+│   │   ├── ai_settings.py           # Provider, model, API key
+│   │   ├── behavior.py              # Reply delay, ignored words, context
+│   │   ├── blacklist.py             # Blacklist CRUD
+│   │   ├── account/                 # Telegram account login flows
+│   │   │   ├── status.py
+│   │   │   ├── qr_login.py
+│   │   │   ├── phone_login.py
+│   │   │   ├── twofa.py
+│   │   │   ├── reset.py
+│   │   │   ├── errors.py            # Telethon error → admin text
+│   │   │   ├── qr.py                # QR PNG renderer
+│   │   │   └── utils.py             # Phone/code normalisation
+│   │   ├── states.py                # FSM states
+│   │   ├── ui.py                    # Safe edit_text helpers
+│   │   ├── fsm_input.py             # Reusable setting-edit FSM helper
+│   │   ├── login_session.py         # Per-admin login task/lock state
+│   │   └── context.py               # Auth and account-status helpers
+│   └── business/                    # Telegram Business event handlers
+│       ├── connections.py
+│       ├── messages.py
+│       ├── edits.py
+│       └── deletions.py
+├── keyboards/                       # Inline keyboards split by admin screen
+│   ├── main.py
+│   ├── ai.py
+│   ├── behavior.py
+│   ├── blacklist.py
+│   ├── account.py
+│   └── common.py
 ├── services/
-│   ├── ai.py                   # OpenAI / Anthropic / Gemini integration
-│   └── catcher_service.py      # Media/message recovery helpers
-├── telegram_account.py         # Connected account client
+│   ├── ai/                          # AI provider integration
+│   │   ├── config.py                # AIConfig + resolver
+│   │   ├── providers/               # OpenAI, Anthropic, Google providers
+│   │   ├── registry.py              # Cached provider factory
+│   │   ├── models.py                # Model listing for the admin UI
+│   │   └── reply.py                 # High-level generate_reply()
+│   ├── catcher/                     # Edit/delete recovery utilities
+│   │   ├── media_downloader.py
+│   │   ├── formatters.py
+│   │   ├── transcript.py
+│   │   └── paths.py                 # Centralised media_cache paths
+│   ├── business/                    # Business-handler helpers
+│   │   ├── skip_policy.py
+│   │   └── media_cache.py
+│   └── notifier.py                  # Admin chat send helpers
+├── telegram_account/                # Telethon client package
+│   ├── client.py
+│   ├── session.py
+│   ├── view_once.py
+│   └── media.py
+├── middlewares/
+│   └── db_middleware.py
 ├── requirements.txt
 └── .env.example
 ```
@@ -58,8 +144,8 @@ iBragimusBot/
 ## Quick Start
 
 ```bash
-git clone <your-repo-url>
-cd iBragimusBot
+git clone https://github.com/ByteFlipper-58/iBragimus-Bot.git
+cd iBragimus-Bot
 
 python -m venv .venv
 # Windows PowerShell:
@@ -115,7 +201,16 @@ python main.py
 
 ## Admin Panel
 
-The private admin panel includes auto-reply toggle, Telegram account login/status, system prompt edit, AI provider and model selection (with provider-fetched lists and manual input), per-provider API key updates, auto-reply behavior (reply delay, ignored words, conversation context), blacklist management, statistics, and connection instructions.
+The private admin panel includes:
+
+- Auto-reply on/off toggle and Telegram account status.
+- Telegram account login (QR, phone code, 2FA) and session reset.
+- System prompt editing.
+- AI provider, model (paginated provider-fetched list or manual input), and API key.
+- Auto-reply behaviour: reply delay, ignored words, conversation context (toggle + depth).
+- Blacklist management.
+- Bot usage statistics.
+- Telegram Business connection instructions.
 
 ## AI Providers
 
@@ -133,7 +228,7 @@ The bot stores runtime data locally and these files are intentionally git-ignore
 
 - `data.db` — SQLite database;
 - `telegram_account.session` — connected account session;
-- `media_cache/` — cached media files;
+- `media_cache/` — cached media files (per-chat, view-once, transcripts);
 - `.env` — local secrets.
 
 Treat all of the above as sensitive. API keys entered through the admin panel are stored in the local SQLite settings table, and the bot attempts to delete admin messages containing keys after saving them. Keep the host machine trusted and rotate provider keys if logs, database files, or screenshots are ever exposed.
