@@ -54,7 +54,7 @@ async def main() -> None:
     """Start the Telegram Business bot and connected account client."""
     logger.info("Initializing bot components...")
     
-    db_manager = DatabaseManager(settings.DB_PATH)
+    db_manager = DatabaseManager()
     repository = BotRepository(db_manager)
 
     try:

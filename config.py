@@ -1,6 +1,6 @@
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -24,8 +24,20 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = Field(default="gemini-2.5-flash", description="Gemini model used for AI replies")
 
     LOG_LEVEL: str = Field(default="INFO", description="Standard logging level")
+
+    DB_BACKEND: str = Field(
+        default="sqlite",
+        description="Database backend: 'sqlite' (default) or 'postgres'",
+    )
     DB_PATH: str = Field(default="data.db", description="Path to the SQLite database file")
-    
+    DATABASE_URL: str | None = Field(
+        default=None,
+        description=(
+            "Connection DSN for external databases. Required when DB_BACKEND=postgres. "
+            "Format: postgresql://user:password@host:5432/dbname"
+        ),
+    )
+
     TELEGRAM_API_ID: int = Field(..., description="Telegram API ID for the connected account client")
     TELEGRAM_API_HASH: str = Field(..., description="Telegram API hash for the connected account client")
 
@@ -67,5 +79,29 @@ class Settings(BaseSettings):
         if level not in allowed:
             raise ValueError(f"LOG_LEVEL must be one of: {', '.join(sorted(allowed))}.")
         return level
+
+    @field_validator("DB_BACKEND")
+    @classmethod
+    def validate_db_backend(cls, v: str) -> str:
+        backend = v.strip().lower()
+        allowed = {"sqlite", "postgres", "postgresql"}
+        if backend not in allowed:
+            raise ValueError(f"DB_BACKEND must be one of: {', '.join(sorted(allowed))}.")
+        return "postgres" if backend == "postgresql" else backend
+
+    @model_validator(mode="after")
+    def validate_database_url(self) -> "Settings":
+        if self.DB_BACKEND == "postgres":
+            if not self.DATABASE_URL or not self.DATABASE_URL.strip():
+                raise ValueError(
+                    "DATABASE_URL must be set when DB_BACKEND=postgres "
+                    "(e.g. postgresql://user:password@host:5432/dbname)."
+                )
+            dsn = self.DATABASE_URL.strip()
+            if not (dsn.startswith("postgres://") or dsn.startswith("postgresql://")):
+                raise ValueError(
+                    "DATABASE_URL must start with 'postgres://' or 'postgresql://'."
+                )
+        return self
 
 settings = Settings()

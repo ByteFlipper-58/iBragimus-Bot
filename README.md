@@ -83,11 +83,30 @@ Open a private chat with your bot and send `/start`.
     <tr><td><code>ANTHROPIC_API_KEY</code> · <code>ANTHROPIC_MODEL</code></td><td align="center">—</td><td>Anthropic defaults</td></tr>
     <tr><td><code>GEMINI_API_KEY</code> · <code>GEMINI_MODEL</code></td><td align="center">—</td><td>Google Gemini defaults</td></tr>
     <tr><td><code>LOG_LEVEL</code></td><td align="center">—</td><td><code>DEBUG</code> / <code>INFO</code> / ... (default <code>INFO</code>)</td></tr>
-    <tr><td><code>DB_PATH</code></td><td align="center">—</td><td>SQLite path (default <code>data.db</code>)</td></tr>
+    <tr><td><code>DB_BACKEND</code></td><td align="center">—</td><td><code>sqlite</code> (default) or <code>postgres</code></td></tr>
+    <tr><td><code>DB_PATH</code></td><td align="center">—</td><td>SQLite path (default <code>data.db</code>, used when <code>DB_BACKEND=sqlite</code>)</td></tr>
+    <tr><td><code>DATABASE_URL</code></td><td align="center">—</td><td>PostgreSQL DSN, required when <code>DB_BACKEND=postgres</code></td></tr>
   </tbody>
 </table>
 
 > Values set from the admin panel override the `.env` defaults.
+
+### External PostgreSQL (optional)
+
+Default storage is single-file SQLite. To use PostgreSQL instead:
+
+```bash
+pip install asyncpg
+```
+
+In `.env`:
+
+```dotenv
+DB_BACKEND=postgres
+DATABASE_URL=postgresql://user:password@localhost:5432/ibragimusbot
+```
+
+The schema is created automatically on first launch. Existing SQLite data is **not** migrated.
 
 ---
 

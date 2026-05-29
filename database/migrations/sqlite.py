@@ -1,9 +1,18 @@
-import aiosqlite
+"""SQLite schema migrations.
+
+This is the original migration set, kept verbatim so existing ``data.db``
+files keep working without re-initialising.
+"""
+
+from __future__ import annotations
+
 import logging
+
+import aiosqlite
 
 logger = logging.getLogger(__name__)
 
-MIGRATIONS = {
+MIGRATIONS: dict[int, list[str]] = {
     1: [
         """
         CREATE TABLE IF NOT EXISTS schema_version (
@@ -77,29 +86,20 @@ MIGRATIONS = {
             deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """,
-        """
-        INSERT OR IGNORE INTO settings (key, value) VALUES ('ai_enabled', '1');
-        """,
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('ai_enabled', '1');",
         """
         INSERT OR IGNORE INTO settings (key, value) VALUES (
-            'system_prompt', 
+            'system_prompt',
             'Ты — умный и вежливый ИИ-ассистент, помогающий отвечать на сообщения в личном профиле Telegram. Отвечай кратко, профессионально и дружелюбно. Если вопрос требует личного участия владельца, вежливо сообщи, что он ответит, как только освободится.'
         );
         """,
-        """
-        INSERT OR IGNORE INTO settings (key, value) VALUES ('reply_delay_seconds', '0');
-        """,
-        """
-        INSERT OR IGNORE INTO settings (key, value) VALUES ('ignored_words', '');
-        """,
-        """
-        INSERT OR IGNORE INTO settings (key, value) VALUES ('ai_context_enabled', '1');
-        """,
-        """
-        INSERT OR IGNORE INTO settings (key, value) VALUES ('ai_context_limit', '5');
-        """
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('reply_delay_seconds', '0');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('ignored_words', '');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('ai_context_enabled', '1');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('ai_context_limit', '5');",
     ]
 }
+
 
 async def get_current_version(conn: aiosqlite.Connection) -> int:
     """Return the current SQLite schema version."""
@@ -107,48 +107,45 @@ async def get_current_version(conn: aiosqlite.Connection) -> int:
         async with conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='schema_version';"
         ) as cursor:
-            table_exists = await cursor.fetchone()
-            if not table_exists:
+            if not await cursor.fetchone():
                 return 0
 
-        async with conn.execute("SELECT MAX(version) as max_version FROM schema_version;") as cursor:
+        async with conn.execute("SELECT MAX(version) AS max_version FROM schema_version;") as cursor:
             row = await cursor.fetchone()
             if row and row["max_version"] is not None:
                 return row["max_version"]
             return 0
-    except Exception as e:
-        logger.error(f"Error checking schema version: {e}")
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.error("Error checking SQLite schema version: %s", exc)
         return 0
 
-async def run_migrations(conn: aiosqlite.Connection) -> None:
-    """Apply pending schema migrations."""
-    current_version = await get_current_version(conn)
-    target_version = max(MIGRATIONS.keys()) if MIGRATIONS else 0
 
-    if current_version >= target_version:
-        logger.info(f"Database schema is up-to-date (Version {current_version}).")
+async def run_migrations(conn: aiosqlite.Connection) -> None:
+    """Apply pending SQLite schema migrations."""
+    current = await get_current_version(conn)
+    target = max(MIGRATIONS.keys()) if MIGRATIONS else 0
+
+    if current >= target:
+        logger.info("SQLite schema is up-to-date (version %s).", current)
         return
 
-    logger.info(f"Database schema version is {current_version}. Migrating to Version {target_version}...")
+    logger.info("Migrating SQLite schema %s -> %s...", current, target)
 
-    for version in sorted(MIGRATIONS.keys()):
-        if version <= current_version:
+    for version in sorted(MIGRATIONS):
+        if version <= current:
             continue
-
-        logger.info(f"Applying database migration step: Version {version}...")
+        logger.info("Applying SQLite migration %s...", version)
         try:
             for query in MIGRATIONS[version]:
                 await conn.execute(query)
-
             await conn.execute(
                 "INSERT INTO schema_version (version) VALUES (?);", (version,)
             )
-
             await conn.commit()
-            logger.info(f"Migration to Version {version} completed successfully.")
-        except Exception as e:
+            logger.info("SQLite migration %s applied.", version)
+        except Exception as exc:
             await conn.rollback()
-            logger.error(f"FATAL: Database migration to Version {version} failed: {e}. Rolled back.")
-            raise e
+            logger.error("SQLite migration %s failed: %s. Rolled back.", version, exc)
+            raise
 
-    logger.info(f"Database migrations complete. New active Version: {target_version}.")
+    logger.info("SQLite migrations complete (version %s).", target)
