@@ -1,238 +1,142 @@
-# iBragimusBot
+<div align="center">
 
-[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Aiogram](https://img.shields.io/badge/Aiogram-3.x-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)](https://docs.aiogram.dev/)
-[![SQLite](https://img.shields.io/badge/SQLite-local-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+# 🤖 iBragimusBot
 
-Telegram Business assistant for AI auto-replies, message edit/delete tracking, blacklist management, and media recovery through a connected Telegram account session.
+**Telegram Business AI assistant** — auto-replies, edit/delete recovery,<br>
+view-once media saving, and a private admin panel.
 
-Secrets stay in your `.env` or local SQLite database, runtime data stays on your machine, and AI provider settings can be changed from the private admin chat.
+<p>
+  <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.12+-3776AB.svg?logo=python&logoColor=white"></a>
+  <a href="https://docs.aiogram.dev/"><img alt="aiogram" src="https://img.shields.io/badge/aiogram-3.x-2CA5E0.svg?logo=telegram&logoColor=white"></a>
+  <a href="https://docs.telethon.dev/"><img alt="Telethon" src="https://img.shields.io/badge/telethon-1.x-26A5E4.svg?logo=telegram&logoColor=white"></a>
+  <a href="https://www.sqlite.org/"><img alt="SQLite" src="https://img.shields.io/badge/SQLite-local-003B57.svg?logo=sqlite&logoColor=white"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-green.svg"></a>
+</p>
 
-## Features
+<p>
+  <a href="https://github.com/ByteFlipper-58/iBragimus-Bot/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/ByteFlipper-58/iBragimus-Bot?style=flat&logo=github&color=yellow"></a>
+  <a href="https://github.com/ByteFlipper-58/iBragimus-Bot/network/members"><img alt="Forks" src="https://img.shields.io/github/forks/ByteFlipper-58/iBragimus-Bot?style=flat&logo=github"></a>
+  <a href="https://github.com/ByteFlipper-58/iBragimus-Bot/issues"><img alt="Issues" src="https://img.shields.io/github/issues/ByteFlipper-58/iBragimus-Bot?style=flat&logo=github"></a>
+  <a href="https://github.com/ByteFlipper-58/iBragimus-Bot/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/ByteFlipper-58/iBragimus-Bot?style=flat&logo=github"></a>
+  <img alt="Repo size" src="https://img.shields.io/github/repo-size/ByteFlipper-58/iBragimus-Bot?style=flat&logo=github">
+  <img alt="Code size" src="https://img.shields.io/github/languages/code-size/ByteFlipper-58/iBragimus-Bot?style=flat&logo=github">
+  <img alt="Top language" src="https://img.shields.io/github/languages/top/ByteFlipper-58/iBragimus-Bot?style=flat&logo=python&logoColor=white">
+</p>
 
-- Telegram Business message handling with AI auto-replies.
-- Runtime AI provider switching between OpenAI, Anthropic, and Google Gemini.
-- Model selection from provider-fetched lists, with pagination and manual input.
-- API key management from the private admin panel.
-- Editable system prompt and a global AI on/off toggle.
-- Reply delay control and ignored-words filtering.
-- Conversation context for AI replies (toggle + adjustable depth).
-- Blacklist checks before auto-replying.
-- Message archive for edit/delete recovery, with admin notifications.
-- Bulk-deletion transcript backup file.
-- View-once photo/video saving through the connected account client.
-- SQLite-backed local persistence.
+</div>
 
-## Tech Stack
+---
 
-| Area | Tooling |
-| --- | --- |
-| Bot framework | `aiogram` 3.x |
-| Connected Telegram account | `telethon` |
-| AI providers | `openai`, `anthropic`, `google-genai` |
-| Database | SQLite via `aiosqlite` |
-| Configuration | `pydantic-settings`, `.env` |
-| QR rendering | `segno` |
+## ✨ Features
 
-## Architecture
+- 💬 &nbsp;AI auto-replies in Telegram Business chats
+- 🧠 &nbsp;OpenAI · Anthropic · Google Gemini, switchable at runtime
+- 📝 &nbsp;Editable system prompt, reply delay, ignored words, context depth
+- 🚫 &nbsp;Blacklist with per-user reasons
+- 🕘 &nbsp;Message archive — edit timeline and bulk-deletion transcripts
+- 📸 &nbsp;View-once photo and video saving via Telethon
+- 🔐 &nbsp;QR · phone · 2FA login for the connected account
+- 💾 &nbsp;Single-file SQLite, no external services
 
-The codebase is split into small focused modules grouped by responsibility, so
-each layer has one reason to change.
+---
 
-- **Configuration** (`config.py`) — typed environment-driven settings.
-- **Persistence** (`database/`) — `DatabaseManager` owns a single shared
-  SQLite connection. `BotRepository` is a thin container that exposes
-  per-aggregate repositories: `repo.connections`, `repo.settings`,
-  `repo.blacklist`, `repo.logs`, `repo.archive`.
-- **AI service** (`services/ai/`) — pluggable provider package. `AIConfig`
-  resolves the active provider, the `providers/` subpackage holds the
-  per-vendor implementations, `registry.py` caches configured clients,
-  `models.py` powers the admin model picker, and `reply.py` is the
-  high-level helper used by Business handlers.
-- **Catcher service** (`services/catcher/`) — media downloader, HTML
-  formatters for edit/delete alerts, and bulk-deletion transcript
-  generation. All filesystem paths are centralised in `paths.py`.
-- **Business helpers** (`services/business/`) — auto-reply skip policy
-  and message-media caching extracted from handlers.
-- **Notifier** (`services/notifier.py`) — single place for sending
-  messages, documents, and cached media to the admin chat.
-- **Connected account** (`telegram_account/`) — Telethon client lifecycle,
-  view-once media interceptor, session helpers.
-- **Middleware** (`middlewares/db_middleware.py`) — injects `BotRepository`
-  into aiogram handler context.
-- **Handlers** (`handlers/`) — admin and Business event handlers, each split
-  into small modules and a shared FSM-input helper.
-- **Keyboards** (`keyboards/`) — inline keyboard factories grouped by
-  admin screen.
+## 📋 Requirements
 
-## Project Structure
+- Python **3.12+**
+- Bot token from [@BotFather](https://t.me/BotFather)
+- API credentials from [my.telegram.org/apps](https://my.telegram.org/apps)
+- An API key from one of: **OpenAI**, **Anthropic**, **Google AI**
 
-```text
-iBragimusBot/
-├── main.py                          # App entry: bot, dispatcher, routers, middleware
-├── config.py                        # Pydantic settings from .env
-├── database/
-│   ├── db.py                        # DatabaseManager (shared aiosqlite connection)
-│   ├── migrations.py                # Schema bootstrap and seed settings
-│   ├── repository.py                # BotRepository (thin aggregator)
-│   └── repositories/                # Per-aggregate repositories
-│       ├── connections.py
-│       ├── settings.py
-│       ├── blacklist.py
-│       ├── logs.py
-│       └── messages_archive.py
-├── handlers/
-│   ├── admin/                       # Private admin panel
-│   │   ├── menu.py                  # /start, /menu, stats, AI toggle, help
-│   │   ├── prompt.py                # System prompt editor
-│   │   ├── ai_settings.py           # Provider, model, API key
-│   │   ├── behavior.py              # Reply delay, ignored words, context
-│   │   ├── blacklist.py             # Blacklist CRUD
-│   │   ├── account/                 # Telegram account login flows
-│   │   │   ├── status.py
-│   │   │   ├── qr_login.py
-│   │   │   ├── phone_login.py
-│   │   │   ├── twofa.py
-│   │   │   ├── reset.py
-│   │   │   ├── errors.py            # Telethon error → admin text
-│   │   │   ├── qr.py                # QR PNG renderer
-│   │   │   └── utils.py             # Phone/code normalisation
-│   │   ├── states.py                # FSM states
-│   │   ├── ui.py                    # Safe edit_text helpers
-│   │   ├── fsm_input.py             # Reusable setting-edit FSM helper
-│   │   ├── login_session.py         # Per-admin login task/lock state
-│   │   └── context.py               # Auth and account-status helpers
-│   └── business/                    # Telegram Business event handlers
-│       ├── connections.py
-│       ├── messages.py
-│       ├── edits.py
-│       └── deletions.py
-├── keyboards/                       # Inline keyboards split by admin screen
-│   ├── main.py
-│   ├── ai.py
-│   ├── behavior.py
-│   ├── blacklist.py
-│   ├── account.py
-│   └── common.py
-├── services/
-│   ├── ai/                          # AI provider integration
-│   │   ├── config.py                # AIConfig + resolver
-│   │   ├── providers/               # OpenAI, Anthropic, Google providers
-│   │   ├── registry.py              # Cached provider factory
-│   │   ├── models.py                # Model listing for the admin UI
-│   │   └── reply.py                 # High-level generate_reply()
-│   ├── catcher/                     # Edit/delete recovery utilities
-│   │   ├── media_downloader.py
-│   │   ├── formatters.py
-│   │   ├── transcript.py
-│   │   └── paths.py                 # Centralised media_cache paths
-│   ├── business/                    # Business-handler helpers
-│   │   ├── skip_policy.py
-│   │   └── media_cache.py
-│   └── notifier.py                  # Admin chat send helpers
-├── telegram_account/                # Telethon client package
-│   ├── client.py
-│   ├── session.py
-│   ├── view_once.py
-│   └── media.py
-├── middlewares/
-│   └── db_middleware.py
-├── requirements.txt
-└── .env.example
-```
+---
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 git clone https://github.com/ByteFlipper-58/iBragimus-Bot.git
 cd iBragimus-Bot
 
 python -m venv .venv
-# Windows PowerShell:
-.\.venv\Scripts\Activate.ps1
-# Linux/macOS:
-source .venv/bin/activate
-
+source .venv/bin/activate            # Windows: .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-```
 
-Copy the example env file and fill in the required values:
-
-```bash
-cp .env.example .env          # Windows: Copy-Item .env.example .env
-```
-
-```env
-BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN
-ADMIN_ID=YOUR_TELEGRAM_USER_ID
-
-AI_PROVIDER=google
-
-OPENAI_API_KEY=YOUR_OPENAI_API_KEY
-OPENAI_MODEL=gpt-4.1-mini
-
-ANTHROPIC_API_KEY=YOUR_ANTHROPIC_API_KEY
-ANTHROPIC_MODEL=claude-sonnet-4-20250514
-
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-GEMINI_MODEL=gemini-2.5-flash
-
-TELEGRAM_API_ID=YOUR_TELEGRAM_API_ID
-TELEGRAM_API_HASH=YOUR_TELEGRAM_API_HASH
-```
-
-Run the bot, then open a private chat with it and send `/start` or `/menu`:
-
-```bash
+cp .env.example .env                 # fill in BOT_TOKEN, ADMIN_ID, TELEGRAM_API_*
 python main.py
 ```
 
-## Telegram Setup
+Open a private chat with your bot and send `/start`.
 
-- **Bot token** — create a bot via [@BotFather](https://t.me/BotFather) and put the token into `BOT_TOKEN`.
-- **Admin ID** — set `ADMIN_ID` to your numeric Telegram user ID. Only this account can use the admin panel.
-- **API credentials** — create an app at [my.telegram.org/apps](https://my.telegram.org/apps) and copy `api_id` → `TELEGRAM_API_ID`, `api_hash` → `TELEGRAM_API_HASH`. These are used by the connected account client for QR/phone login and media recovery.
+---
 
-### Business connection
+## ⚙️ Configuration
 
-1. In [@BotFather](https://t.me/BotFather), select your bot and enable **Bot Settings → Business Mode**.
-2. In your Telegram app, go to **Telegram Business → Chatbots**.
-3. Add your bot and allow it to reply to messages.
+<table>
+  <thead>
+    <tr><th>Variable</th><th align="center">Required</th><th>Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>BOT_TOKEN</code></td><td align="center">✅</td><td>Bot token from @BotFather</td></tr>
+    <tr><td><code>ADMIN_ID</code></td><td align="center">✅</td><td>Numeric Telegram ID of the bot owner</td></tr>
+    <tr><td><code>TELEGRAM_API_ID</code></td><td align="center">✅</td><td>API ID for the connected account</td></tr>
+    <tr><td><code>TELEGRAM_API_HASH</code></td><td align="center">✅</td><td>API hash for the connected account</td></tr>
+    <tr><td><code>AI_PROVIDER</code></td><td align="center">—</td><td><code>openai</code>, <code>anthropic</code>, or <code>google</code> (default <code>google</code>)</td></tr>
+    <tr><td><code>OPENAI_API_KEY</code> · <code>OPENAI_MODEL</code></td><td align="center">—</td><td>OpenAI defaults</td></tr>
+    <tr><td><code>ANTHROPIC_API_KEY</code> · <code>ANTHROPIC_MODEL</code></td><td align="center">—</td><td>Anthropic defaults</td></tr>
+    <tr><td><code>GEMINI_API_KEY</code> · <code>GEMINI_MODEL</code></td><td align="center">—</td><td>Google Gemini defaults</td></tr>
+    <tr><td><code>LOG_LEVEL</code></td><td align="center">—</td><td><code>DEBUG</code> / <code>INFO</code> / ... (default <code>INFO</code>)</td></tr>
+    <tr><td><code>DB_PATH</code></td><td align="center">—</td><td>SQLite path (default <code>data.db</code>)</td></tr>
+  </tbody>
+</table>
 
-## Admin Panel
+> Values set from the admin panel override the `.env` defaults.
 
-The private admin panel includes:
+---
 
-- Auto-reply on/off toggle and Telegram account status.
-- Telegram account login (QR, phone code, 2FA) and session reset.
-- System prompt editing.
-- AI provider, model (paginated provider-fetched list or manual input), and API key.
-- Auto-reply behaviour: reply delay, ignored words, conversation context (toggle + depth).
-- Blacklist management.
-- Bot usage statistics.
-- Telegram Business connection instructions.
+## 🔌 Telegram Business
 
-## AI Providers
+1. In [@BotFather](https://t.me/BotFather): **Bot Settings → Business Mode → Turn on**
+2. In Telegram: **Settings → Telegram Business → Chatbots**, add the bot and allow replies
+3. In the bot's admin panel: log in to the connected account via QR or phone
 
-| Provider | Env key | Model setting |
-| --- | --- | --- |
-| OpenAI | `OPENAI_API_KEY` | `OPENAI_MODEL` |
-| Anthropic | `ANTHROPIC_API_KEY` | `ANTHROPIC_MODEL` |
-| Google Gemini | `GEMINI_API_KEY` | `GEMINI_MODEL` |
+---
 
-The admin panel can override provider, model, and API key at runtime. If no override exists, the bot falls back to `.env`.
+## 📁 Project Layout
 
-## Local Data & Security
+<details>
+<summary><b>Click to expand</b></summary>
 
-The bot stores runtime data locally and these files are intentionally git-ignored:
+```
+config.py                 settings from .env
+database/                 SQLite + per-aggregate repositories
+handlers/admin/           private admin panel (FSM)
+handlers/business/        Telegram Business event handlers
+keyboards/                inline keyboards split by screen
+services/ai/              AI providers, config, model listing
+services/catcher/         media downloader, formatters, transcripts
+services/business/        skip-policy and message media cache
+services/notifier.py      admin chat send helpers
+telegram_account/         Telethon client + view-once interceptor
+middlewares/              aiogram middleware
+main.py                   entry point
+```
 
-- `data.db` — SQLite database;
-- `telegram_account.session` — connected account session;
-- `media_cache/` — cached media files (per-chat, view-once, transcripts);
-- `.env` — local secrets.
+</details>
 
-Treat all of the above as sensitive. API keys entered through the admin panel are stored in the local SQLite settings table, and the bot attempts to delete admin messages containing keys after saving them. Keep the host machine trusted and rotate provider keys if logs, database files, or screenshots are ever exposed.
+---
 
-## License
+## 🔐 Security
 
-No license has been selected yet.
+`*.session`, `*.db`, `media_cache/`, and `.env` are **git-ignored**. API keys entered through the admin panel are stored in the local SQLite `settings` table, and admin messages with keys, codes, or 2FA passwords are deleted from the chat right after they are processed.
+
+> Treat the host machine as trusted and rotate provider keys if logs or database files leak.
+
+---
+
+## 📄 License
+
+Released under the [MIT License](LICENSE).
+
+Copyright © 2026 **Ibragim Maltsagov** — developed by **[ByteFlipper](https://github.com/ByteFlipper-58)**.
+
+<div align="center">
+<sub>Built with ❤️ on top of <a href="https://docs.aiogram.dev/">aiogram</a> and <a href="https://docs.telethon.dev/">Telethon</a></sub>
+</div>
