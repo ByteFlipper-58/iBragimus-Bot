@@ -7,3 +7,6 @@ pydantic-settings>=2.2.1
 aiosqlite>=0.20.0
 telethon>=1.35.0
 segno>=1.6.1
+
+# Optional: PostgreSQL backend. Install only if DB_BACKEND=postgres.
+# asyncpg>=0.29.0
