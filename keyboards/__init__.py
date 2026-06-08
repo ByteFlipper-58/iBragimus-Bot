@@ -23,6 +23,12 @@ from keyboards.behavior import (
 from keyboards.blacklist import get_back_to_blacklist_keyboard
 from keyboards.common import get_back_keyboard
 from keyboards.main import get_main_keyboard
+from keyboards.memory import (
+    get_auto_memory_keyboard,
+    get_back_to_memory_keyboard,
+    get_chat_note_keyboard,
+    get_memory_keyboard,
+)
 
 __all__ = (
     "get_main_keyboard",
@@ -37,4 +43,8 @@ __all__ = (
     "get_account_2fa_keyboard",
     "get_account_phone_keyboard",
     "get_account_status_keyboard",
+    "get_memory_keyboard",
+    "get_back_to_memory_keyboard",
+    "get_chat_note_keyboard",
+    "get_auto_memory_keyboard",
 )

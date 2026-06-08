@@ -8,6 +8,8 @@ they need: ``repo.settings.all()``, ``repo.blacklist.add(...)`` and so on.
 from database.db import DatabaseManager
 from database.repositories import (
     BlacklistRepository,
+    ChatNotesRepository,
+    ChatStateRepository,
     ConnectionRepository,
     LogRepository,
     MessageArchiveRepository,
@@ -25,3 +27,5 @@ class BotRepository:
         self.blacklist = BlacklistRepository(db_manager)
         self.logs = LogRepository(db_manager)
         self.archive = MessageArchiveRepository(db_manager)
+        self.chat_notes = ChatNotesRepository(db_manager)
+        self.chat_state = ChatStateRepository(db_manager)
