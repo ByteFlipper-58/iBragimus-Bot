@@ -33,6 +33,7 @@ def get_main_keyboard(ai_enabled: bool, account_status: str) -> InlineKeyboardMa
         ],
         [InlineKeyboardButton(text="🤖 Настройки ИИ", callback_data="ai_settings")],
         [InlineKeyboardButton(text="⚙️ Поведение автоответов", callback_data="behavior_settings")],
+        [InlineKeyboardButton(text="🧠 Память и личность", callback_data="memory_menu")],
         [
             InlineKeyboardButton(text="🚫 Черный список", callback_data="manage_blacklist"),
             InlineKeyboardButton(text="📊 Статистика", callback_data="view_stats"),

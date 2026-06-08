@@ -96,3 +96,91 @@ class MessageArchiveRepository:
             """,
             (message_id, chat_id),
         )
+
+    async def get_recent_for_chat(self, chat_id: int, limit: int = 12) -> list[dict]:
+        """Return the most recent messages for a chat in chronological order.
+
+        Includes both incoming and outgoing messages (the owner's replies are
+        archived too), so the AI sees the actual back-and-forth even when some
+        incoming messages did not trigger a reply.
+        """
+        rows = await self.db.fetch_all(
+            """
+            SELECT message_id, sender_id, sender_name, message_text,
+                   media_type, created_at
+            FROM business_messages
+            WHERE chat_id = ?
+              AND message_text IS NOT NULL
+              AND message_text <> ''
+            ORDER BY created_at DESC, message_id DESC
+            LIMIT ?;
+            """,
+            (chat_id, limit),
+        )
+        return list(reversed(rows))
+
+    async def get_messages_after(
+        self, chat_id: int, after_message_id: int, limit: int = 200
+    ) -> list[dict]:
+        """Return chronological messages with id > ``after_message_id``."""
+        return await self.db.fetch_all(
+            """
+            SELECT message_id, sender_id, sender_name, message_text, created_at
+            FROM business_messages
+            WHERE chat_id = ?
+              AND message_id > ?
+              AND message_text IS NOT NULL
+              AND message_text <> ''
+            ORDER BY message_id ASC
+            LIMIT ?;
+            """,
+            (chat_id, after_message_id, limit),
+        )
+
+    async def count_messages_for_chat(self, chat_id: int) -> int:
+        """Total count of archived messages with non-empty text in a chat."""
+        row = await self.db.fetch_one(
+            """
+            SELECT COUNT(*) AS cnt FROM business_messages
+            WHERE chat_id = ?
+              AND message_text IS NOT NULL
+              AND message_text <> '';
+            """,
+            (chat_id,),
+        )
+        return int((row or {}).get("cnt") or 0)
+
+    async def get_last_owner_message(
+        self, chat_id: int, owner_id: int
+    ) -> dict | None:
+        """Return the latest message authored by the owner in this chat."""
+        return await self.db.fetch_one(
+            """
+            SELECT message_id, created_at
+            FROM business_messages
+            WHERE chat_id = ? AND sender_id = ?
+            ORDER BY created_at DESC, message_id DESC
+            LIMIT 1;
+            """,
+            (chat_id, owner_id),
+        )
+
+    async def get_recent_outgoing_by_owner(
+        self, owner_id: int, limit: int = 80
+    ) -> list[dict]:
+        """Return recent owner-authored messages across all chats, newest first.
+
+        Used by the style-extraction job to mine the owner's writing style.
+        """
+        return await self.db.fetch_all(
+            """
+            SELECT message_text, created_at
+            FROM business_messages
+            WHERE sender_id = ?
+              AND message_text IS NOT NULL
+              AND message_text <> ''
+            ORDER BY created_at DESC, message_id DESC
+            LIMIT ?;
+            """,
+            (owner_id, limit),
+        )

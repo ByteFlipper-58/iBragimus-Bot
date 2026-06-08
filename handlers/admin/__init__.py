@@ -1,7 +1,7 @@
 from aiogram import F, Router
 
 from config import settings
-from handlers.admin import account, ai_settings, behavior, blacklist, menu, prompt
+from handlers.admin import account, ai_settings, behavior, blacklist, memory, menu, prompt
 
 router = Router(name="admin")
 
@@ -16,3 +16,4 @@ router.include_router(ai_settings.router)
 router.include_router(behavior.router)
 router.include_router(blacklist.router)
 router.include_router(account.router)
+router.include_router(memory.router)

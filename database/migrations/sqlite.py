@@ -90,14 +90,44 @@ MIGRATIONS: dict[int, list[str]] = {
         """
         INSERT OR IGNORE INTO settings (key, value) VALUES (
             'system_prompt',
-            'Ты — умный и вежливый ИИ-ассистент, помогающий отвечать на сообщения в личном профиле Telegram. Отвечай кратко, профессионально и дружелюбно. Если вопрос требует личного участия владельца, вежливо сообщи, что он ответит, как только освободится.'
+            'Ты отвечаешь в личной переписке Telegram ОТ ИМЕНИ владельца аккаунта, от первого лица. Ты — это он сам. Пиши так, как написал бы живой человек в мессенджере: коротко, по-человечески, без формальностей. Жёсткие правила: 1) Отвечай ОДНИМ сообщением, одним готовым ответом, без вариантов и альтернатив. 2) НИКОГДА не пиши «вот несколько вариантов», «варианты ответа», «можно ответить так», списков с пунктами, тире или маркерами. 3) НИКОГДА не объясняй и не комментируй свой ответ, не давай советов. Только сам ответ. 4) Не используй Markdown, звёздочки, заголовки. Обычный текст, как в чате. 5) Пиши на том же языке, на котором пишет собеседник. 6) Если не знаешь конкретный факт о владельце (время поезда, планы, адрес), не выдумывай — отвечай уклончиво: «уточню», «гляну и скажу», «не помню точно». 7) Длина — обычно 1–2 короткие фразы.'
         );
         """,
         "INSERT OR IGNORE INTO settings (key, value) VALUES ('reply_delay_seconds', '0');",
         "INSERT OR IGNORE INTO settings (key, value) VALUES ('ignored_words', '');",
         "INSERT OR IGNORE INTO settings (key, value) VALUES ('ai_context_enabled', '1');",
         "INSERT OR IGNORE INTO settings (key, value) VALUES ('ai_context_limit', '5');",
-    ]
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('owner_bio', '');",
+        """
+        CREATE TABLE IF NOT EXISTS chat_notes (
+            chat_id INTEGER PRIMARY KEY,
+            notes TEXT NOT NULL DEFAULT '',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS chat_state (
+            chat_id INTEGER PRIMARY KEY,
+            paused_until TIMESTAMP,
+            summary TEXT NOT NULL DEFAULT '',
+            summary_up_to_id INTEGER NOT NULL DEFAULT 0,
+            last_auto_memory_id INTEGER NOT NULL DEFAULT 0,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """,
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('debounce_seconds', '8');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('owner_pause_minutes', '15');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('stop_word', '!стоп');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('resume_word', '!старт');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('toxicity_filter_enabled', '1');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('toxicity_keywords', '');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('auto_memory_enabled', '1');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('auto_memory_every_n', '10');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('summary_enabled', '1');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('summary_threshold', '30');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('owner_style', '');",
+        "INSERT OR IGNORE INTO settings (key, value) VALUES ('owner_style_updated_at', '');",
+    ],
 }
 
 

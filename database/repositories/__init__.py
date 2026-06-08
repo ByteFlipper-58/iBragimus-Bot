@@ -6,6 +6,8 @@ Each module owns CRUD for a single domain table and is meant to be used through
 """
 
 from database.repositories.blacklist import BlacklistRepository
+from database.repositories.chat_notes import ChatNotesRepository
+from database.repositories.chat_state import ChatStateRepository
 from database.repositories.connections import ConnectionRepository
 from database.repositories.logs import LogRepository
 from database.repositories.messages_archive import MessageArchiveRepository
@@ -13,6 +15,8 @@ from database.repositories.settings import SettingsRepository
 
 __all__ = (
     "BlacklistRepository",
+    "ChatNotesRepository",
+    "ChatStateRepository",
     "ConnectionRepository",
     "LogRepository",
     "MessageArchiveRepository",
